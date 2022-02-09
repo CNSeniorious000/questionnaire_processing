@@ -83,3 +83,24 @@ def show_submit_time(table:pd.DataFrame, index):
         f"提交时间分布_散点图"
     )
 
+def show_time_used(table:pd.DataFrame, index):
+    item_name = "所用时间"
+    item = [int(i[:-1]) for i in table[item_name]]
+    return save_and_show(
+        Scatter(init_opts=opts.InitOpts(
+            theme=global_theme, animation_opts=opts.AnimationOpts(bool(delay)),
+            # width="1280px",
+            height="360px",
+        ))
+        .add_xaxis(index)
+        .add_yaxis(item_name, item, symbol_size=4)
+        .set_global_opts(
+            title_opts=opts.TitleOpts(title="散点图"),
+            yaxis_opts=opts.AxisOpts(is_scale=True, name="用时/s"),
+            xaxis_opts=opts.AxisOpts(name="答卷序号"),
+        )
+        .set_series_opts(
+            label_opts=opts.LabelOpts(False),
+        ),
+        f"用时分布_散点图"
+    )
