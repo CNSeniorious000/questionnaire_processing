@@ -4,6 +4,7 @@ import threading
 import pandas as pd
 from selenium import webdriver
 from snapshot_selenium import snapshot
+from loky import get_reusable_executor
 from pyecharts.render import make_snapshot
 from selenium.webdriver.edge.options import Options as EdgeOptions
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
@@ -45,7 +46,10 @@ def to_png(html, name, ratio=3, delay=0, driver=Driver.Edge, remove=False):
 
 delay = 0
 
-def save_and_show(plot, name, ratio=3, delay=delay, driver=Driver.Edge, remove=True, multithreading=True):
-    args = (plot.render(), name, ratio, delay, driver, remove)
-    threading.Thread(target=to_png, args=args).start() if multithreading else to_png(*args)
+def save_and_show(plot, name, ratio=3, delay=delay, driver=Driver.Edge, remove=True, concurrent="loky"):
+    args = (plot.render(f"{name}.html"), name, ratio, delay, driver, remove)
+    match concurrent:
+        case "loky": get_reusable_executor(max_workers=16, reuse=True).submit(to_png, *args)
+        case "thread": threading.Thread(target=to_png, args=args).start()
+        case _: to_png(*args)
     return plot.render_notebook()

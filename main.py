@@ -46,5 +46,5 @@ def show_time_used(table:pd.DataFrame, index):
         .set_series_opts(
             label_opts=opts.LabelOpts(False),
         ),
-        f"用时分布_散点图", multithreading=False
+        f"用时分布_散点图"
     )
