@@ -18,14 +18,17 @@ def get_init_options(height=360):
 
 def show_submit_time(table:pd.DataFrame, index):
     item_name = "提交答卷时间"
-    item = [parse_time(i).int_timestamp for i in table[item_name]]
+    item = []
+    for i in table[item_name]:
+        t = parse_time(i).time()
+        item.append(t.hour*60 + t.minute)
     return save_and_show(
         Scatter(init_opts=get_init_options())
         .add_xaxis(index)
-        .add_yaxis("答卷", item, symbol_size=4)
+        .add_yaxis("", item, symbol_size=4)
         .set_global_opts(
             title_opts=opts.TitleOpts(title="散点图"),
-            yaxis_opts=opts.AxisOpts(is_scale=True, name="时间戳/ms"),
+            yaxis_opts=opts.AxisOpts(name="在一天中的时间/min"),
             xaxis_opts=opts.AxisOpts(name="答卷序号"),
         )
         .set_series_opts(
@@ -34,13 +37,31 @@ def show_submit_time(table:pd.DataFrame, index):
         f"提交时间分布_散点图"
     )
 
+def show_submit_timestamp(table:pd.DataFrame, index):
+    item_name = "提交答卷时间"
+    item = [parse_time(i).int_timestamp for i in table[item_name]]
+    return save_and_show(
+        Scatter(init_opts=get_init_options())
+        .add_xaxis(index)
+        .add_yaxis("", item, symbol_size=4)
+        .set_global_opts(
+            title_opts=opts.TitleOpts(title="散点图"),
+            yaxis_opts=opts.AxisOpts(is_scale=True, name="时间戳/ms"),
+            xaxis_opts=opts.AxisOpts(name="答卷序号"),
+        )
+        .set_series_opts(
+            label_opts=opts.LabelOpts(False),
+        ),
+        f"提交时间戳分布_散点图"
+    )
+
 def show_time_used(table:pd.DataFrame, index):
     item_name = "所用时间"
     item = [int(i[:-1]) for i in table[item_name]]
     return save_and_show(
         Scatter(init_opts=get_init_options())
         .add_xaxis(index)
-        .add_yaxis("答卷", item, symbol_size=4)
+        .add_yaxis("", item, symbol_size=4)
         .set_global_opts(
             title_opts=opts.TitleOpts(title="散点图"),
             yaxis_opts=opts.AxisOpts(name="用时/s"),
@@ -56,7 +77,7 @@ def show_used_comp_submit(table):
     return save_and_show(
         Scatter(init_opts=get_init_options())
         .add_xaxis([int(i[:-1]) for i in table["所用时间"]])
-        .add_yaxis("答卷", [parse_time(i).int_timestamp for i in table["提交答卷时间"]], symbol_size=4)
+        .add_yaxis("", [parse_time(i).int_timestamp for i in table["提交答卷时间"]], symbol_size=4)
         .set_global_opts(
             title_opts=opts.TitleOpts(title="散点图"),
             xaxis_opts=opts.AxisOpts(is_scale=True, name="用时/s"),
