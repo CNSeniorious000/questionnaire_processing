@@ -4,6 +4,9 @@ from pyecharts import options as opts
 from pyecharts.globals import ThemeType
 
 global_theme = ThemeType.INFOGRAPHIC
+global_theme = ThemeType.LIGHT
+global_theme = ThemeType.WONDERLAND
+
 
 def get_init_options(height=360):
     return opts.InitOpts(
@@ -47,4 +50,20 @@ def show_time_used(table:pd.DataFrame, index):
             label_opts=opts.LabelOpts(False),
         ),
         f"用时分布_散点图"
+    )
+
+def show_used_comp_submit(table):
+    return save_and_show(
+        Scatter(init_opts=get_init_options())
+        .add_xaxis([int(i[:-1]) for i in table["所用时间"]])
+        .add_yaxis("答卷", [parse_time(i).int_timestamp for i in table["提交答卷时间"]], symbol_size=4)
+        .set_global_opts(
+            title_opts=opts.TitleOpts(title="散点图"),
+            xaxis_opts=opts.AxisOpts(is_scale=True, name="用时/s"),
+            yaxis_opts=opts.AxisOpts(is_scale=True, name="提交时间/ms"),
+        )
+        .set_series_opts(
+            label_opts=opts.LabelOpts(False),
+        ),
+        f"用时分布与提交时间的关系_散点图"
     )
