@@ -11,7 +11,7 @@ from selenium.webdriver.firefox.options import Options as FirefoxOptions
 
 
 def read_excel(path):
-    table = pd.read_excel(rf"data\{path}.xlsx", engine="openpyxl")
+    table = pd.read_excel(rf"data\{path}.xlsx", engine="openpyxl", na_values='(空)')
     index = list(table["序号"])
     items = list(table.columns)
     return table, index, items

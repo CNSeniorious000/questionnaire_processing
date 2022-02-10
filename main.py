@@ -102,10 +102,16 @@ def show_time_compare():
     return save_and_show(scatter, f"用时分布与提交时间的关系_散点图")
 
 def count(sequence):
-    return sorted(Counter(sequence).items(), key=lambda i:i[1], reverse=True)
+    return sorted(Counter(sequence).items(), key=lambda i:i[1])
 
-province_ip, city_ip = zip(*(i[i.index('(')+1:-1].split('-') for i in table["来自IP"]))
-province_ans, city_ans = zip(*(i.split('-') for i in table["2、您所在的城市是【选填】"] if i != '(空)'))
+def get_ip_loc(string):
+    return string[string.index('(')+1:-1].split('-')
+
+def get_ans_loc(string):
+    return string.split('-')
+
+province_ip, city_ip = zip(*map(get_ip_loc, table["来自IP"]))
+province_ans, city_ans = zip(*(get_ans_loc(i) for i in table[question(2)] if pd.notna(i)))
 
 def show_district(use_ip=False):
     if use_ip:
@@ -121,6 +127,7 @@ def show_district(use_ip=False):
         Bar(get_init_options())
         .add_xaxis(x)
         .add_yaxis("", y)
+        .reversal_axis()
         .set_global_opts(title_opts=opts.TitleOpts(subtitle="柱状图", title="来源地区-省"))
     )
     cloud = (
