@@ -87,14 +87,25 @@ def show_time_compare():
         f"用时分布与提交时间的关系_散点图"
     )
 
-def show_district():
-    loc_ip = list(Counter([i[i.rindex("-") + 1:i.rindex(")")] for i in table["来自IP"]]).items())
-    loc_ans = list()
-    (
+def count(sequence):
+    return sorted(Counter(sequence).items(), key=lambda i:i[1])
+
+province_ip, city_ip = zip(*(i[i.index('(')+1:-1].split('-') for i in table["来自IP"]))
+province_ans, city_ans = zip(*(i.split('-') for i in table["2、您所在的城市是【选填】"] if i != '(空)'))
+
+def show_district(backend="ip"):
+    if backend == "ans":
+        province = province_ans
+        city = city_ans
+    else:
+        province = province_ip
+        city = city_ip
+
+    return save_and_show(
         WordCloud(init_opts=get_init_options())
-            .add("", words, word_size_range=(17, 30))
-            .set_global_opts(title_opts=opts.TitleOpts(title="词云图"))
-            .render_notebook()
+        .add("", count(province_ip), word_size_range=(13, 30))
+        .set_global_opts(title_opts=opts.TitleOpts(title="词云图")),
+        ""
     )
 
 
