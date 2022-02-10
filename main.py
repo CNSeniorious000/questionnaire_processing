@@ -10,13 +10,13 @@ global_theme = ThemeType.WONDERLAND
 
 table, index, items = read_excel(1)
 
-def show_submit_time():
-    time_stamp = [parse_time(i).int_timestamp for i in table["提交答卷时间"]]
-    time_24h = []
-    for i in table["提交答卷时间"]:
-        t = parse_time(i).time()
-        time_24h.append(t.hour + t.minute/60)
+time_stamp = [parse_time(i).int_timestamp / 1000 / 60 for i in table["提交答卷时间"]]
+time_24h = []
+for i in table["提交答卷时间"]:
+    t = parse_time(i).time()
+    time_24h.append(t.hour + t.minute / 60)
 
+def show_submit_time():
     return save_and_show(
         Grid(init_opts=get_init_options())
         .add(
@@ -24,37 +24,35 @@ def show_submit_time():
             .add_xaxis(index)
             .add_yaxis("", time_stamp, symbol_size=4)
             .set_global_opts(
-                title_opts=opts.TitleOpts(subtitle="散点图", title="1"),
-                yaxis_opts=opts.AxisOpts(is_scale=True, name="时间戳/ms"),
+                title_opts=opts.TitleOpts(subtitle="散点图", title="提交时间在时间线上的分布"),
+                yaxis_opts=opts.AxisOpts(is_scale=True, name="时间戳/min"),
                 xaxis_opts=opts.AxisOpts(name="答卷序号"),
             )
             .set_series_opts(
                 label_opts=opts.LabelOpts(False),
             ),
-            opts.GridOpts(pos_right="58%")
+            opts.GridOpts(pos_right="56%")
         )
         .add(
             Scatter(init_opts=get_init_options())
             .add_xaxis(index)
             .add_yaxis("", time_24h, symbol_size=4)
             .set_global_opts(
-                title_opts=opts.TitleOpts(subtitle="散点图", title="2"),
-                yaxis_opts=opts.AxisOpts(name="在24h中的时间/h"),
+                title_opts=opts.TitleOpts(subtitle="散点图", title="提交时间在24h的分布", pos_left="46%"),
+                yaxis_opts=opts.AxisOpts(name="时刻/h"),
                 xaxis_opts=opts.AxisOpts(name="答卷序号"),
             )
             .set_series_opts(
                 label_opts=opts.LabelOpts(False),
             ),
-            opts.GridOpts(pos_left="58%")
-        )
-
-        ,
+            opts.GridOpts(pos_left="56%")
+        ),
         "提交时间分布-散点图"
     )
 
-def show_time_used(table:pd.DataFrame, index):
-    item_name = "所用时间"
-    item = [int(i[:-1]) for i in table[item_name]]
+time_cost = [int(i[:-1]) for i in table["所用时间"]]
+
+def show_time_used():
     return save_and_show(
         Scatter(init_opts=get_init_options())
         .add_xaxis(index)
@@ -86,15 +84,13 @@ def show_used_comp_submit(table):
         f"用时分布与提交时间的关系_散点图"
     )
 
-def show_used_comp_submit_2(table):
-    item = []
-    for i in table["提交答卷时间"]:
-        t = parse_time(i).time()
-        item.append(t.hour + t.minute/60)
+def show_used_comp_submit_2():
+    x, y = zip(*sorted(zip(time_cost, time_24h)))
+
     return save_and_show(
         Scatter(init_opts=get_init_options())
-        .add_xaxis([int(i[:-1]) for i in table["所用时间"]])
-        .add_yaxis("", item, symbol_size=4)
+        .add_xaxis(x)
+        .add_yaxis("", y, symbol_size=4)
         .set_global_opts(
             title_opts=opts.TitleOpts(subtitle="散点图", title="用时与提交时间的关系"),
             xaxis_opts=opts.AxisOpts(is_scale=True, name="用时/s"),
@@ -102,7 +98,8 @@ def show_used_comp_submit_2(table):
         )
         .set_series_opts(
             label_opts=opts.LabelOpts(False),
-        ),
+        )
+        ,
         f"用时分布与提交时间的关系_散点图"
     )
 
@@ -111,5 +108,5 @@ def get_init_options(height=360):
         theme=global_theme,
         animation_opts=opts.AnimationOpts(bool(delay)),
         # width="1280px",
-        height=f"{height}px",
+        height=f"{height}px"
     )
