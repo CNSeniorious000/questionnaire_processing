@@ -8,6 +8,14 @@ from pyecharts.globals import ThemeType
 # global_theme = ThemeType.LIGHT
 global_theme = ThemeType.WONDERLAND
 
+def get_init_options(height=360):
+    return opts.InitOpts(
+        theme=global_theme,
+        animation_opts=opts.AnimationOpts(bool(delay)),
+        # width="1280px",
+        height=f"{height}px"
+    )
+
 
 table, index, items = read_excel(1)
 
@@ -21,7 +29,7 @@ def show_submit_time():
     return save_and_show(
         Grid(get_init_options())
         .add(
-            Scatter(init_opts=get_init_options())
+            Scatter(get_init_options())
             .add_xaxis(index)
             .add_yaxis("", time_stamp, symbol_size=4)
             .set_global_opts(
@@ -35,7 +43,7 @@ def show_submit_time():
             opts.GridOpts(pos_right="56%")
         )
         .add(
-            Scatter(init_opts=get_init_options())
+            Scatter(get_init_options())
             .add_xaxis(index)
             .add_yaxis("", time_24h, symbol_size=4)
             .set_global_opts(
@@ -88,31 +96,34 @@ def show_time_compare():
     )
 
 def count(sequence):
-    return sorted(Counter(sequence).items(), key=lambda i:i[1])
+    return sorted(Counter(sequence).items(), key=lambda i:i[1], reverse=True)
 
 province_ip, city_ip = zip(*(i[i.index('(')+1:-1].split('-') for i in table["来自IP"]))
 province_ans, city_ans = zip(*(i.split('-') for i in table["2、您所在的城市是【选填】"] if i != '(空)'))
 
-def show_district(backend="ip"):
-    if backend == "ans":
-        province = province_ans
-        city = city_ans
-    else:
+def show_district(use_ip=False):
+    if use_ip:
         province = province_ip
         city = city_ip
+    else:
+        province = province_ans
+        city = city_ans
+
+    x, y = zip(*count(province))
 
     return save_and_show(
-        WordCloud(init_opts=get_init_options())
-        .add("", count(province_ip), word_size_range=(13, 30))
-        .set_global_opts(title_opts=opts.TitleOpts(title="词云图")),
+        Grid(get_init_options())
+        .add(
+            WordCloud(get_init_options())
+            .add("", count(city), word_size_range=(20, 30))
+            .set_global_opts(title_opts=opts.TitleOpts(title="词云图")),
+            opts.GridOpts(pos_right="56%")
+        )
+        .add(
+            Bar(get_init_options())
+            .add_xaxis(x)
+            .add_yaxis("", y),
+            opts.GridOpts(pos_left="56%")
+        ),
         ""
-    )
-
-
-def get_init_options(height=360):
-    return opts.InitOpts(
-        theme=global_theme,
-        animation_opts=opts.AnimationOpts(bool(delay)),
-        # width="1280px",
-        height=f"{height}px"
     )
