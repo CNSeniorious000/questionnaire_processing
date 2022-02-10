@@ -27,7 +27,7 @@ for i in table["提交答卷时间"]:
 
 def show_submit_time():
     return save_and_show(
-        Grid(get_init_options())
+        Page(layout=Page.SimplePageLayout)
         .add(
             Scatter(get_init_options())
             .add_xaxis(index)
@@ -40,21 +40,17 @@ def show_submit_time():
             .set_series_opts(
                 label_opts=opts.LabelOpts(False),
             ),
-            opts.GridOpts(pos_right="56%")
-        )
-        .add(
             Scatter(get_init_options())
             .add_xaxis(index)
             .add_yaxis("", time_24h, symbol_size=4)
             .set_global_opts(
-                title_opts=opts.TitleOpts(subtitle="散点图", title="提交时间在24h的分布", pos_left="46%"),
+                title_opts=opts.TitleOpts(subtitle="散点图", title="提交时间在24h的分布"),
                 yaxis_opts=opts.AxisOpts(name="时刻/h"),
                 xaxis_opts=opts.AxisOpts(name="答卷序号"),
             )
             .set_series_opts(
                 label_opts=opts.LabelOpts(False),
             ),
-            opts.GridOpts(pos_left="56%")
         ),
         "提交时间分布-散点图"
     )
