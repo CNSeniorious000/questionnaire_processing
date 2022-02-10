@@ -1,3 +1,4 @@
+from collections import Counter
 from core import *
 from pyecharts.charts import *
 from pyecharts import options as opts
@@ -68,7 +69,7 @@ def show_time_used():
         f"用时分布_条形图"
     )
 
-def show_used_comp_submit_2():
+def show_time_compare():
     x, y = zip(*sorted(zip(time_cost, time_24h)))
 
     return save_and_show(
@@ -82,10 +83,20 @@ def show_used_comp_submit_2():
         )
         .set_series_opts(
             label_opts=opts.LabelOpts(False),
-        )
-        ,
+        ),
         f"用时分布与提交时间的关系_散点图"
     )
+
+def show_district():
+    loc_ip = list(Counter([i[i.rindex("-") + 1:i.rindex(")")] for i in table["来自IP"]]).items())
+    loc_ans = list()
+    (
+        WordCloud(init_opts=get_init_options())
+            .add("", words, word_size_range=(17, 30))
+            .set_global_opts(title_opts=opts.TitleOpts(title="词云图"))
+            .render_notebook()
+    )
+
 
 def get_init_options(height=360):
     return opts.InitOpts(
