@@ -3,18 +3,17 @@ from pyecharts.charts import *
 from pyecharts import options as opts
 from pyecharts.globals import ThemeType
 
-global_theme = ThemeType.INFOGRAPHIC
+# global_theme = ThemeType.INFOGRAPHIC
 # global_theme = ThemeType.LIGHT
-# global_theme = ThemeType.WONDERLAND
+global_theme = ThemeType.WONDERLAND
+
 
 table, index, items = read_excel(1)
 
-
-def show_submit_time(table:pd.DataFrame, index):
-    time_name = "提交答卷时间"
-    time_stamp = [parse_time(i).int_timestamp for i in table[item_name]]
+def show_submit_time():
+    time_stamp = [parse_time(i).int_timestamp for i in table["提交答卷时间"]]
     time_24h = []
-    for i in table[time_name]:
+    for i in table["提交答卷时间"]:
         t = parse_time(i).time()
         time_24h.append(t.hour + t.minute/60)
 
@@ -25,29 +24,31 @@ def show_submit_time(table:pd.DataFrame, index):
             .add_xaxis(index)
             .add_yaxis("", time_stamp, symbol_size=4)
             .set_global_opts(
-                title_opts=opts.TitleOpts(subtitle="散点图", title="提交时间在时间线上的分布"),
+                title_opts=opts.TitleOpts(subtitle="散点图", title="1"),
                 yaxis_opts=opts.AxisOpts(is_scale=True, name="时间戳/ms"),
                 xaxis_opts=opts.AxisOpts(name="答卷序号"),
             )
             .set_series_opts(
                 label_opts=opts.LabelOpts(False),
             ),
-            opts.GridOpts(pos_left=0.5)
+            opts.GridOpts(pos_right="58%")
         )
         .add(
             Scatter(init_opts=get_init_options())
             .add_xaxis(index)
             .add_yaxis("", time_24h, symbol_size=4)
             .set_global_opts(
-                title_opts=opts.TitleOpts(subtitle="散点图", title="提交时间在24h中的分布"),
-                yaxis_opts=opts.AxisOpts(name="在一天中的时间/h"),
+                title_opts=opts.TitleOpts(subtitle="散点图", title="2"),
+                yaxis_opts=opts.AxisOpts(name="在24h中的时间/h"),
                 xaxis_opts=opts.AxisOpts(name="答卷序号"),
             )
             .set_series_opts(
                 label_opts=opts.LabelOpts(False),
             ),
-            opts.GridOpts(pos_right=0.5)
-        ),
+            opts.GridOpts(pos_left="58%")
+        )
+
+        ,
         "提交时间分布-散点图"
     )
 
