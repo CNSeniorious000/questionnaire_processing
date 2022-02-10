@@ -4,9 +4,10 @@ from pyecharts.charts import *
 from pyecharts import options as opts
 from pyecharts.globals import ThemeType
 
-global_theme = ThemeType.INFOGRAPHIC
+# global_theme = ThemeType.INFOGRAPHIC
 # global_theme = ThemeType.LIGHT
 # global_theme = ThemeType.WONDERLAND
+global_theme = ThemeType.ESSOS
 
 all_plots = []
 
@@ -20,6 +21,9 @@ def get_init_options(height=360):
 
 
 table, index, items = read_excel(1)
+
+def question(n):
+    return items[n + 6 - 1]  # natural index
 
 time_stamp = [parse_time(i).int_timestamp / 1000 / 60 for i in table["提交答卷时间"]]
 time_24h = []
@@ -129,3 +133,4 @@ def show_district(use_ip=False):
     all_plots.append(cloud)
 
     return save_and_show(Page(Page.SimplePageLayout).add(bar, cloud), "来源地区_词云图")
+
