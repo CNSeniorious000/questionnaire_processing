@@ -44,7 +44,7 @@ def to_png(html, name, ratio=3, delay=0, driver=Driver.Edge, remove=False):
         case Driver.Chrome:
             make_snapshot(snapshot, html, rf"output\{name}.png", delay, ratio, remove)
 
-delay = 0
+delay = 1
 
 def save_and_show(plot, name, ratio=3, delay=delay, driver=Driver.Edge, remove=True, concurrent="thread"):
     args = (plot.render(f"{name}.html"), name, ratio, delay, driver, remove)
