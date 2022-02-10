@@ -7,9 +7,14 @@ from pyecharts.globals import ThemeType
 # global_theme = ThemeType.INFOGRAPHIC
 # global_theme = ThemeType.LIGHT
 # global_theme = ThemeType.WONDERLAND
-global_theme = ThemeType.ESSOS
+# global_theme = ThemeType.ESSOS
+global_theme = ThemeType.WALDEN
+global_theme = ThemeType.VINTAGE
 
 all_plots = []
+
+def show_all():
+    return Page(Page.SimplePageLayout).add(*all_plots).render_notebook()
 
 def get_init_options(height=360):
     return opts.InitOpts(
@@ -19,11 +24,21 @@ def get_init_options(height=360):
         height=f"{height}px"
     )
 
-
 table, index, items = read_excel(1)
 
 def question(n):
     return items[n + 6 - 1]  # natural index
+
+yes, no, uncertain = [], [], []
+for i, whether in enumerate(table[question(1)]):
+    match whether:
+        case '有': yes.append(i)
+        case '无': no.append(i)
+        case '我不确定': uncertain.append(i)
+
+table_yes = table.iloc[yes]
+table_no = table.iloc[no]
+table_uncertain = table.iloc[uncertain]
 
 time_stamp = [parse_time(i).int_timestamp / 1000 / 60 for i in table["提交答卷时间"]]
 time_24h = []
@@ -104,14 +119,14 @@ def show_time_compare():
 def count(sequence):
     return sorted(Counter(sequence).items(), key=lambda i:i[1])
 
-def get_ip_loc(string):
+def parse_ip_loc(string):
     return string[string.index('(')+1:-1].split('-')
 
-def get_ans_loc(string):
+def parse_ans_loc(string):
     return string.split('-')
 
-province_ip, city_ip = zip(*map(get_ip_loc, table["来自IP"]))
-province_ans, city_ans = zip(*(get_ans_loc(i) for i in table[question(2)] if pd.notna(i)))
+province_ip, city_ip = zip(*map(parse_ip_loc, table["来自IP"]))
+province_ans, city_ans = zip(*(parse_ans_loc(i) for i in table[question(2)] if pd.notna(i)))
 
 def show_district(use_ip=False):
     if use_ip:
@@ -121,15 +136,29 @@ def show_district(use_ip=False):
         province = province_ans
         city = city_ans
 
-    x, y = zip(*count(province))
+    x, y = zip(*count(province))  # x: 地名, y: 人数
+
+    province_yes = Counter(parse_ans_loc(i)[0] for i in table_yes[question(2)] if pd.notna(i))
+    province_no = Counter(parse_ans_loc(i)[0] for i in table_no[question(2)] if pd.notna(i))
+    province_uncertain = Counter(parse_ans_loc(i)[0] for i in table_uncertain[question(2)] if pd.notna(i))
 
     bar = (
-        Bar(get_init_options())
+        Bar(get_init_options(480))
         .add_xaxis(x)
-        .add_yaxis("", y)
+        .add_yaxis("无", [province_no.get(i, 0) for i in x], stack="stack")
+        .add_yaxis("不确定", [province_uncertain.get(i, 0) for i in x], stack="stack")
+        .add_yaxis("有", [province_yes.get(i, 0) for i in x], stack="stack")
         .reversal_axis()
         .set_global_opts(title_opts=opts.TitleOpts(subtitle="柱状图", title="来源地区-省"))
+        .set_series_opts(label_opts=opts.LabelOpts(position="right"))
     )
+    # bar = (
+    #     Bar(get_init_options())
+    #         .add_xaxis(x)
+    #         .add_yaxis("", y)
+    #         .set_global_opts(title_opts=opts.TitleOpts(subtitle="柱状图", title="来源地区-省"))
+    #         .set_series_opts(label_opts=opts.LabelOpts(position="right"))
+    # )
     cloud = (
         WordCloud(get_init_options())
         .add("", count(city), word_size_range=(20, 30))
@@ -141,3 +170,4 @@ def show_district(use_ip=False):
 
     return save_and_show(Page(Page.SimplePageLayout).add(bar, cloud), "来源地区_词云图")
 
+# def show_has
