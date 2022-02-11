@@ -1,7 +1,5 @@
 from collections import Counter
-
-import pandas as pd
-
+from random import shuffle
 from core import *
 from pyecharts.charts import *
 from pyecharts import options as opts
@@ -190,7 +188,7 @@ def show_whether():
 
     return save_and_show(pie, "是否具有_饼状图")
 
-def parse_column(df:pd.DataFrame, column, multi_choice, separator=' | ', transpose=True):
+def parse_column(df:pd.DataFrame, column, multi_choice, separator=' | ', transpose=False):
     if multi_choice:
         to_count = []
         for i in df[column]:
@@ -215,55 +213,38 @@ def parse_title(column:str):
             pass
     return column[column.index('、')+1:rindex]
 
-def show_any_pie(column:str, df: pd.DataFrame = table, multi_choice=True, title=None):
-    x, y = parse_column(df, column, multi_choice)
-    title = parse_title(column) if title is None else title
-
+def show_simple_pie(column:str, df: pd.DataFrame = table, multi_choice=True, suffix=""):
+    title = parse_title(column) + suffix
     pie = (
         Pie(get_init_options())
-        .add("", )
+        .add("", parse_column(df, column, multi_choice, transpose=True), rosetype="radius")
         .set_global_opts(
             title_opts=opts.TitleOpts(subtitle="饼状图", title=title),
             legend_opts=opts.LegendOpts(pos_right="right", orient="vertical", align="right")
         )
     )
-
     all_plots.append(pie)
-
     return save_and_show(pie, f"{title}_饼状图")
 
-def show_double_pie(column:str, inner=table, outer=table_yes, multi_choice=True, title=None):
-    if multi_choice:
-        to_count = []
-        for i in df[column]:
-            to_count.extend(i.split('┋'))
-        x, y = zip(*Counter(to_count).items())
-    else:
-        x, y = zip(*Counter(df[column]).items())
-        x = [i.replace('┋', ' | ') for i in x]
-    total = len(df)
-    rindex = len(column)
-    for suffix in '【？':  # tail letters to ignore
-        try:
-            rindex = min(rindex, column.rindex(suffix))
-        except ValueError:
-            pass
+def show_double_pie(column:str, inner=table, outer=table_yes, multi_choice=True, suffix=""):
+    title = parse_title(column) + suffix
 
-    title = column[column.index('、')+1:rindex] if title is None else title
+    data_inner = parse_column(inner, column, multi_choice, transpose=True)
+    data_outer = parse_column(outer, column, multi_choice, transpose=True)
+    # shuffle(data_inner)
+    # shuffle(data_outer)
+    label_opts_inner = opts.LabelOpts(multi_choice, position="inside")
+    label_opts_outer = opts.LabelOpts(position="outside")
 
     pie = (
-        Pie(get_init_options())
-        .add(
-            "", [(f"{x[i]} ({100*num/total:.0f}%)", num) for i, num in enumerate(y)],
-            rosetype="radius",
-        )
+        Pie(get_init_options(720))
+        .add("", data_inner, radius=["15%","45%"], label_opts=label_opts_inner)
+        .add("", data_outer, radius=["55%","75%"], label_opts=label_opts_outer)
         .set_global_opts(
             title_opts=opts.TitleOpts(subtitle="饼状图", title=title),
-            legend_opts=opts.LegendOpts(pos_right="right", orient="vertical", align="right")
+            legend_opts=opts.LegendOpts(pos_bottom=0, pos_right=0, orient="vertical", align="right")
         )
     )
-
     all_plots.append(pie)
-
     return save_and_show(pie, f"{title}_饼状图")
 
