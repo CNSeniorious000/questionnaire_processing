@@ -1,4 +1,7 @@
 from collections import Counter
+
+import pandas as pd
+
 from core import *
 from pyecharts.charts import *
 from pyecharts import options as opts
@@ -187,26 +190,38 @@ def show_whether():
 
     return save_and_show(pie, "是否具有_饼状图")
 
-def show_any_pie(column:str, df: pd.DataFrame = table, multi_choice=True):
+def parse_column(df:pd.DataFrame, column, multi_choice, separator=' | ', transpose=True):
     if multi_choice:
         to_count = []
-        for i in table[column]:
+        for i in df[column]:
             to_count.extend(i.split('┋'))
-        x, y = zip(*Counter(to_count).items())
+        x, y = zip(*sorted(Counter(to_count).items()))
     else:
-        x, y = zip(*Counter(table[column]).items())
-    total = sum(y)
+        x, y = zip(*sorted(Counter(df[column]).items()))
+        x = [i.replace('┋', separator) for i in x]
+
+    if transpose:
+        total = len(df)
+        return [(f"{x[i]} ({100 * num / total:.0f}%)", num) for i, num in enumerate(y)]
+    else:
+        return x, y
+
+def parse_title(column:str):
     rindex = len(column)
     for suffix in '【？':  # tail letters to ignore
         try:
             rindex = min(rindex, column.rindex(suffix))
         except ValueError:
             pass
-    title = column[column.index('、')+1:rindex]
+    return column[column.index('、')+1:rindex]
+
+def show_any_pie(column:str, df: pd.DataFrame = table, multi_choice=True, title=None):
+    x, y = parse_column(df, column, multi_choice)
+    title = parse_title(column) if title is None else title
 
     pie = (
         Pie(get_init_options())
-        .add("", [(f"{x[i]} ({100*num/total:.0f}%)", num) for i, num in enumerate(y)])
+        .add("", )
         .set_global_opts(
             title_opts=opts.TitleOpts(subtitle="饼状图", title=title),
             legend_opts=opts.LegendOpts(pos_right="right", orient="vertical", align="right")
@@ -216,3 +231,39 @@ def show_any_pie(column:str, df: pd.DataFrame = table, multi_choice=True):
     all_plots.append(pie)
 
     return save_and_show(pie, f"{title}_饼状图")
+
+def show_double_pie(column:str, inner=table, outer=table_yes, multi_choice=True, title=None):
+    if multi_choice:
+        to_count = []
+        for i in df[column]:
+            to_count.extend(i.split('┋'))
+        x, y = zip(*Counter(to_count).items())
+    else:
+        x, y = zip(*Counter(df[column]).items())
+        x = [i.replace('┋', ' | ') for i in x]
+    total = len(df)
+    rindex = len(column)
+    for suffix in '【？':  # tail letters to ignore
+        try:
+            rindex = min(rindex, column.rindex(suffix))
+        except ValueError:
+            pass
+
+    title = column[column.index('、')+1:rindex] if title is None else title
+
+    pie = (
+        Pie(get_init_options())
+        .add(
+            "", [(f"{x[i]} ({100*num/total:.0f}%)", num) for i, num in enumerate(y)],
+            rosetype="radius",
+        )
+        .set_global_opts(
+            title_opts=opts.TitleOpts(subtitle="饼状图", title=title),
+            legend_opts=opts.LegendOpts(pos_right="right", orient="vertical", align="right")
+        )
+    )
+
+    all_plots.append(pie)
+
+    return save_and_show(pie, f"{title}_饼状图")
+
