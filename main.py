@@ -8,13 +8,15 @@ from pyecharts.globals import ThemeType
 # global_theme = ThemeType.LIGHT
 # global_theme = ThemeType.WONDERLAND
 # global_theme = ThemeType.ESSOS
-global_theme = ThemeType.WALDEN
+# global_theme = ThemeType.WALDEN
 global_theme = ThemeType.VINTAGE
 
 all_plots = []
 
-def show_all():
-    return Page(Page.SimplePageLayout).add(*all_plots).render_notebook()
+def show_all(save=True):
+    page = Page(Page.SimplePageLayout).add(*all_plots)
+    page.render("dashboard.html") if save else None
+    return page.render_notebook()
 
 def get_init_options(height=360):
     return opts.InitOpts(
@@ -170,4 +172,47 @@ def show_district(use_ip=False):
 
     return save_and_show(Page(Page.SimplePageLayout).add(bar, cloud), "来源地区_词云图")
 
-# def show_has
+def show_whether():
+    result = [
+        (f"有 ({100 * len(yes) / len(index):.0f}%)", len(yes)),
+        (f"无 ({100 * len(no) / len(index):.0f}%)", len(no)),
+        (f"不确定 ({100 * len(uncertain) / len(index):.0f}%)", len(uncertain))
+    ]
+    pie = (
+        Pie(get_init_options())
+        .add("", result)
+        .set_global_opts(title_opts=opts.TitleOpts(subtitle="饼状图", title="您所在的城市具有地摊经济吗"))
+    )
+    all_plots.append(pie)
+
+    return save_and_show(pie, "是否具有_饼状图")
+
+def show_any_pie(column:str, df: pd.DataFrame = table, multi_choice=True):
+    if multi_choice:
+        to_count = []
+        for i in table[column]:
+            to_count.extend(i.split('┋'))
+        x, y = zip(*Counter(to_count).items())
+    else:
+        x, y = zip(*Counter(table[column]).items())
+    total = sum(y)
+    rindex = len(column)
+    for suffix in '【？':  # tail letters to ignore
+        try:
+            rindex = min(rindex, column.rindex(suffix))
+        except ValueError:
+            pass
+    title = column[column.index('、')+1:rindex]
+
+    pie = (
+        Pie(get_init_options())
+        .add("", [(f"{x[i]} ({100*num/total:.0f}%)", num) for i, num in enumerate(y)])
+        .set_global_opts(
+            title_opts=opts.TitleOpts(subtitle="饼状图", title=title),
+            legend_opts=opts.LegendOpts(pos_right="right", orient="vertical", align="right")
+        )
+    )
+
+    all_plots.append(pie)
+
+    return save_and_show(pie, f"{title}_饼状图")
