@@ -1,6 +1,7 @@
 from collections import Counter
-from random import shuffle
+from snownlp import SnowNLP
 from core import *
+import jieba
 from pyecharts.charts import *
 from pyecharts import options as opts
 from pyecharts.globals import ThemeType
@@ -10,7 +11,9 @@ from pyecharts.globals import ThemeType
 # global_theme = ThemeType.WONDERLAND
 # global_theme = ThemeType.ESSOS
 # global_theme = ThemeType.WALDEN
-global_theme = ThemeType.VINTAGE
+# global_theme = ThemeType.VINTAGE
+global_theme = ThemeType.DARK
+# global_theme = ThemeType.PURPLE_PASSION
 
 all_plots = []
 
@@ -73,8 +76,7 @@ def show_submit_time():
         .set_series_opts(label_opts=opts.LabelOpts(False))
     )
 
-    all_plots.append(s1)
-    all_plots.append(s2)
+    all_plots.extend((s1, s2))
 
     return save_and_show(Page(Page.SimplePageLayout).add(s1, s2), "提交时间分布-散点图")
 
@@ -164,12 +166,11 @@ def show_district(use_ip=False):
     # )
     cloud = (
         WordCloud(get_init_options())
-        .add("", count(city), word_size_range=(20, 30))
+        .add("", count(city))
         .set_global_opts(title_opts=opts.TitleOpts(subtitle="词云图", title="来源地区-市"))
     )
 
-    all_plots.append(bar)
-    all_plots.append(cloud)
+    all_plots.extend((bar, cloud))
 
     return save_and_show(Page(Page.SimplePageLayout).add(bar, cloud), "来源地区_词云图")
 
@@ -192,10 +193,10 @@ def parse_column(df:pd.DataFrame, column, multi_choice, separator=' | ', transpo
     if multi_choice:
         to_count = []
         for i in df[column]:
-            to_count.extend(i.split('┋'))
+            to_count.extend(i.split('┋')) if pd.notna(i) else to_count.append(str(i))
         x, y = zip(*sorted(Counter(to_count).items()))
     else:
-        x, y = zip(*sorted(Counter(df[column]).items()))
+        x, y = zip(*sorted(Counter(map(str, df[column])).items()))
         x = [i.replace('┋', separator) for i in x]
 
     if transpose:
@@ -228,14 +229,10 @@ def show_simple_pie(column:str, df: pd.DataFrame = table, multi_choice=True, suf
 
 def show_double_pie(column:str, inner=table, outer=table_yes, multi_choice=True, suffix=""):
     title = parse_title(column) + suffix
-
     data_inner = parse_column(inner, column, multi_choice, transpose=True)
     data_outer = parse_column(outer, column, multi_choice, transpose=True)
-    # shuffle(data_inner)
-    # shuffle(data_outer)
     label_opts_inner = opts.LabelOpts(multi_choice, position="inside")
     label_opts_outer = opts.LabelOpts(position="outside")
-
     pie = (
         Pie(get_init_options(720))
         .add("", data_inner, radius=["15%","45%"], label_opts=label_opts_inner)
@@ -248,3 +245,64 @@ def show_double_pie(column:str, inner=table, outer=table_yes, multi_choice=True,
     all_plots.append(pie)
     return save_and_show(pie, f"{title}_饼状图")
 
+def cut_SnowNLP(text):
+    words = []
+    for i in text:
+        words.extend(j for j in SnowNLP(i).words if len(j) > 1)
+    return words
+
+def cut_jieba(text):
+    words = []
+    for i in text:
+        words.extend(j for j in jieba.cut(i) if len(j) > 1)
+    return words
+
+def cut(text, backend="jieba"):
+    if backend == "jieba":
+        return cut_jieba(text)
+    else:
+        return cut_SnowNLP(text)
+
+def classify(text):
+    if isinstance(text, str):
+        return classify(get_data_except_nan(text))
+    else:
+        positive, negative = [], []
+        for i in sorted_by_sentiments(text):
+            (positive if SnowNLP(i).sentiments > 0.5 else negative).append(i)
+        return positive, negative
+
+def sorted_by_sentiments(text):
+    return sorted(text, key=lambda s:SnowNLP(s).sentiments)
+
+def get_data_except_nan(column:str, df: pd.DataFrame = table):
+    return [i for i in df[column] if pd.notna(i)]
+
+def show_words(column:str, df: pd.DataFrame = table, backend=None, suffix=""):
+    title = parse_title(column) + suffix
+    results = get_data_except_nan(column, df)
+    words = cut(results, backend) if backend is not None else results
+    cloud = (
+        WordCloud(get_init_options())
+        .add("", count(words))
+        .set_global_opts(title_opts=opts.TitleOpts(subtitle="词云图", title=title))
+    )
+    all_plots.append(cloud)
+    return save_and_show(cloud, f"{title}_词云图")
+
+
+def show_opposite(column:str, df: pd.DataFrame = table, suffix=""):
+    title = parse_title(column) + suffix
+    positive, negative = classify(get_data_except_nan(column, df))
+    sun_cloud = (
+        WordCloud(get_init_options())
+        .add("正面词", count(cut(positive)))
+        .set_global_opts(title_opts=opts.TitleOpts(subtitle="正面词", title=title))
+    )
+    raincloud = (
+        WordCloud(get_init_options())
+        .add("负面词", count(cut(negative)))
+        .set_global_opts(title_opts=opts.TitleOpts(subtitle="负面词", title=title))
+    )
+    all_plots.extend(plots := (sun_cloud, raincloud))
+    return save_and_show(Page(Page.SimplePageLayout).add(*plots), f"{title}_双云图")
