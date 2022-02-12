@@ -249,7 +249,7 @@ def show_double_pie(column:str, inner=table, outer=table_yes, multi_choice=True,
         )
     )
     all_plots.append(pie)
-    return save_and_show(pie, f"{title}_双饼图")
+    return save_and_show(pie, f"{title}_饼状图")
 
 def cut_SnowNLP(text):
     words = []
