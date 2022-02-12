@@ -8,10 +8,10 @@ from pyecharts.globals import ThemeType
 
 # global_theme = ThemeType.INFOGRAPHIC
 # global_theme = ThemeType.LIGHT
-global_theme = ThemeType.WONDERLAND
+# global_theme = ThemeType.WONDERLAND
 # global_theme = ThemeType.ESSOS
 # global_theme = ThemeType.WALDEN
-# global_theme = ThemeType.VINTAGE
+global_theme = ThemeType.VINTAGE
 # global_theme = ThemeType.DARK
 # global_theme = ThemeType.PURPLE_PASSION
 
@@ -26,7 +26,7 @@ def get_init_options(height=360):
     return opts.InitOpts(
         theme=global_theme,
         animation_opts=opts.AnimationOpts(bool(delay)),
-        # width="1280px",
+        width="900px",
         height=f"{height}px"
     )
 
@@ -220,14 +220,14 @@ def parse_title(column:str):
             pass
     return column[column.index('、')+1:rindex]
 
-def show_simple_pie(column:str, df: pd.DataFrame = table, multi_choice=True, suffix=""):
+def show_simple_pie(column:str, df: pd.DataFrame = table, multi_choice=True, suffix="", show_legend=True):
     title = parse_title(column) + suffix
     pie = (
         Pie(get_init_options())
         .add("", parse_column(df, column, multi_choice, transpose=True, retain=False), rosetype="radius")
         .set_global_opts(
             title_opts=opts.TitleOpts(subtitle="饼状图", title=title),
-            legend_opts=opts.LegendOpts(pos_right="right", orient="vertical", align="right")
+            legend_opts=opts.LegendOpts(is_show=show_legend, pos_right="right", orient="vertical", align="right")
         )
     )
     all_plots.append(pie)
@@ -319,3 +319,6 @@ def get_others(column):
         for j in i.split('┋')
         if '〖' in i and '〗' in j
     ]
+
+table_sellers = table.loc[(i for i, ans in enumerate(table[question(3)]) if "商贩" in ans)]
+table_non_sellers = table.loc[(i for i, ans in enumerate(table[question(3)]) if "商贩" not in ans)]
