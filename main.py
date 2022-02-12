@@ -8,11 +8,11 @@ from pyecharts.globals import ThemeType
 
 # global_theme = ThemeType.INFOGRAPHIC
 # global_theme = ThemeType.LIGHT
-# global_theme = ThemeType.WONDERLAND
+global_theme = ThemeType.WONDERLAND
 # global_theme = ThemeType.ESSOS
 # global_theme = ThemeType.WALDEN
 # global_theme = ThemeType.VINTAGE
-global_theme = ThemeType.DARK
+# global_theme = ThemeType.DARK
 # global_theme = ThemeType.PURPLE_PASSION
 
 all_plots = []
@@ -130,8 +130,14 @@ def parse_ip_loc(string):
 def parse_ans_loc(string):
     return string.split('-')
 
+def not_null(anything, retain=True):
+    match anything:
+        case '(空)' | '(跳过)': return False
+        case str() if '〖' in anything and '〗' in anything: return retain
+        case _: return pd.notna(anything) and pd.notnull(anything)
+
 province_ip, city_ip = zip(*map(parse_ip_loc, table["来自IP"]))
-province_ans, city_ans = zip(*(parse_ans_loc(i) for i in table[question(2)] if pd.notna(i)))
+province_ans, city_ans = zip(*(parse_ans_loc(i) for i in table[question(2)] if not_null(i)))
 
 def show_district(use_ip=False):
     if use_ip:
@@ -143,9 +149,9 @@ def show_district(use_ip=False):
 
     x, y = zip(*count(province))  # x: 地名, y: 人数
 
-    province_yes = Counter(parse_ans_loc(i)[0] for i in table_yes[question(2)] if pd.notna(i))
-    province_no = Counter(parse_ans_loc(i)[0] for i in table_no[question(2)] if pd.notna(i))
-    province_uncertain = Counter(parse_ans_loc(i)[0] for i in table_uncertain[question(2)] if pd.notna(i))
+    province_yes = Counter(parse_ans_loc(i)[0] for i in table_yes[question(2)] if not_null(i))
+    province_no = Counter(parse_ans_loc(i)[0] for i in table_no[question(2)] if not_null(i))
+    province_uncertain = Counter(parse_ans_loc(i)[0] for i in table_uncertain[question(2)] if not_null(i))
 
     bar = (
         Bar(get_init_options(480))
@@ -189,12 +195,12 @@ def show_whether():
 
     return save_and_show(pie, "是否具有_饼状图")
 
-def parse_column(df:pd.DataFrame, column, multi_choice, separator=' | ', transpose=False):
+def parse_column(df:pd.DataFrame, column, multi_choice, separator=' | ', transpose=False, retain=True):
     if multi_choice:
         to_count = []
         for i in df[column]:
-            to_count.extend(i.split('┋')) if pd.notna(i) else to_count.append(str(i))
-        x, y = zip(*sorted(Counter(to_count).items()))
+            to_count.extend(i.split('┋'))
+        x, y = zip(*sorted(Counter(i for i in to_count if not_null(i, retain)).items()))
     else:
         x, y = zip(*sorted(Counter(map(str, df[column])).items()))
         x = [i.replace('┋', separator) for i in x]
@@ -218,7 +224,7 @@ def show_simple_pie(column:str, df: pd.DataFrame = table, multi_choice=True, suf
     title = parse_title(column) + suffix
     pie = (
         Pie(get_init_options())
-        .add("", parse_column(df, column, multi_choice, transpose=True), rosetype="radius")
+        .add("", parse_column(df, column, multi_choice, transpose=True, retain=False), rosetype="radius")
         .set_global_opts(
             title_opts=opts.TitleOpts(subtitle="饼状图", title=title),
             legend_opts=opts.LegendOpts(pos_right="right", orient="vertical", align="right")
@@ -265,7 +271,7 @@ def cut(text, backend="jieba"):
 
 def classify(text):
     if isinstance(text, str):
-        return classify(get_data_except_nan(text))
+        return classify(get_data_except_null(text))
     else:
         positive, negative = [], []
         for i in sorted_by_sentiments(text):
@@ -275,12 +281,12 @@ def classify(text):
 def sorted_by_sentiments(text):
     return sorted(text, key=lambda s:SnowNLP(s).sentiments)
 
-def get_data_except_nan(column:str, df: pd.DataFrame = table):
-    return [i for i in df[column] if pd.notna(i)]
+def get_data_except_null(column:str, df: pd.DataFrame = table, retain=True):
+    return [i for i in df[column] if not_null(i, retain)]
 
 def show_words(column:str, df: pd.DataFrame = table, backend=None, suffix=""):
     title = parse_title(column) + suffix
-    results = get_data_except_nan(column, df)
+    results = get_data_except_null(column, df)
     words = cut(results, backend) if backend is not None else results
     cloud = (
         WordCloud(get_init_options())
@@ -290,10 +296,9 @@ def show_words(column:str, df: pd.DataFrame = table, backend=None, suffix=""):
     all_plots.append(cloud)
     return save_and_show(cloud, f"{title}_词云图")
 
-
 def show_opposite(column:str, df: pd.DataFrame = table, suffix=""):
     title = parse_title(column) + suffix
-    positive, negative = classify(get_data_except_nan(column, df))
+    positive, negative = classify(get_data_except_null(column, df))
     sun_cloud = (
         WordCloud(get_init_options())
         .add("正面词", count(cut(positive)))
@@ -306,3 +311,11 @@ def show_opposite(column:str, df: pd.DataFrame = table, suffix=""):
     )
     all_plots.extend(plots := (sun_cloud, raincloud))
     return save_and_show(Page(Page.SimplePageLayout).add(*plots), f"{title}_双云图")
+
+def get_others(column):
+    return [
+        j
+        for i in get_data_except_null(column, retain=True)
+        for j in i.split('┋')
+        if '〖' in i and '〗' in j
+    ]
