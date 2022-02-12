@@ -26,7 +26,7 @@ def get_init_options(height=360):
     return opts.InitOpts(
         theme=global_theme,
         animation_opts=opts.AnimationOpts(bool(delay)),
-        width="960px",
+        width="940px",
         height=f"{height}px"
     )
 
