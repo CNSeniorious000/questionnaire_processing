@@ -54,3 +54,7 @@ def save_and_show(plot, name, ratio=3, delay=delay, driver=Driver.Edge, remove=T
         case "thread": threading.Thread(target=to_png, args=args).start()
         case False: to_png(*args)
     return plot.render_notebook()
+
+
+def fill_null():
+    pass
