@@ -4,6 +4,7 @@ import threading
 import pandas as pd
 from selenium import webdriver
 from snapshot_selenium import snapshot
+from scipy.interpolate import interp1d
 from loky import get_reusable_executor
 from pyecharts.render import make_snapshot
 from selenium.webdriver.edge.options import Options as EdgeOptions

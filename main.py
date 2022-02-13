@@ -22,11 +22,11 @@ def show_all(save=True):
     page.render("dashboard.html") if save else None
     return page.render_notebook()
 
-def get_init_options(height=360):
+def get_init_options(height=480):
     return opts.InitOpts(
         theme=global_theme,
         animation_opts=opts.AnimationOpts(bool(delay)),
-        width="940px",
+        width="920px",
         height=f"{height}px"
     )
 
@@ -325,3 +325,16 @@ table_non_sellers = table.loc[(i for i, ans in enumerate(table[question(3)]) if 
 
 def show_order():
     pass
+
+def riverize(xy, x_names, y_names, title, *axis_args):
+    data = [
+        [x_name, xy[x][y], y_name]
+        for x, x_name in enumerate(x_names)
+        for y, y_name in enumerate(y_names)
+    ]
+    river = (
+        ThemeRiver(get_init_options())
+        .add(y_names, data, singleaxis_opts=opts.SingleAxisOpts(*axis_args))
+    )
+    all_plots.append(river)
+    return save_and_show(river, f"{title}_河流图")
