@@ -8,10 +8,10 @@ from pyecharts.globals import ThemeType
 
 # global_theme = ThemeType.INFOGRAPHIC
 # global_theme = ThemeType.LIGHT
-# global_theme = ThemeType.WONDERLAND
+global_theme = ThemeType.WONDERLAND
 # global_theme = ThemeType.ESSOS
 # global_theme = ThemeType.WALDEN
-global_theme = ThemeType.VINTAGE
+# global_theme = ThemeType.VINTAGE
 # global_theme = ThemeType.DARK
 # global_theme = ThemeType.PURPLE_PASSION
 
@@ -180,6 +180,19 @@ def show_district(use_ip=False):
 
     return save_and_show(Page(Page.SimplePageLayout).add(bar, cloud), "来源地区_词云图")
 
+def show_district_pure():
+    province, _ = zip(*map(parse_ip_loc, table["来自IP"]))
+    x, y = zip(*count(province))  # x: 地名, y: 人数
+    bar = (
+        Bar(get_init_options())
+            .add_xaxis(x)
+            .add_yaxis("", y)
+            .set_global_opts(title_opts=opts.TitleOpts(subtitle="柱状图", title="来源地区-省"))
+            .set_series_opts(label_opts=opts.LabelOpts(position="right"))
+    )
+    all_plots.append(bar)
+    return save_and_show(bar, "IP来源地区推测_柱状图")
+
 def show_whether():
     result = [
         (f"有 ({100 * len(yes) / len(index):.0f}%)", len(yes)),
@@ -218,7 +231,10 @@ def parse_title(column:str):
             rindex = min(rindex, column.rindex(suffix))
         except ValueError:
             pass
-    return column[column.index('、')+1:rindex]
+    try:
+        return column[column.index('、')+1:rindex]
+    except ValueError:
+        return column.removesuffix('：')
 
 def show_simple_pie(column:str, df: pd.DataFrame = table, multi_choice=True, suffix="", show_legend=True):
     title = parse_title(column) + suffix
