@@ -22,7 +22,7 @@ def show_all(save=True):
     if save:
         page.render("dashboard.html")
         for i, plot in enumerate(all_plots):
-            to_png(plot.render(), i)
+            to_png(plot.render(), i, delay=1.2)
     
     return page.render_notebook()
 
