@@ -333,7 +333,7 @@ def get_others(column):
         j
         for i in get_data_except_null(column, retain=True)
         for j in i.split('┋')
-        if '〖' in i and '〗' in j
+        if '〖' in j and '〗' in j
     ]
 
 table_sellers = table.loc[(i for i, ans in enumerate(table[question(3)]) if "商贩" in ans)]
@@ -354,3 +354,32 @@ def riverize(xy, x_names, y_names, title, *axis_args):
     )
     all_plots.append(river)
     return save_and_show(river, f"{title}_河流图")
+
+def remove_fill(table:pd.DataFrame, column):
+    table[column] = [
+        i[:i.index('〖')]
+        for i in table[column]
+        if '〖' in i and '〗' in j
+    ]
+
+def show_double_plot():
+    subtitle = separator.join(columns[i] for i in bars)
+    bar = (
+        Bar(opts.InitOpts("920px", "480px", theme=global_theme))
+        .add_xaxis("2015 2016 2017 2018 2019".split())
+        .set_global_opts(
+            title_opts=opts.TitleOpts(f"{title}: {subtitle}"),
+            yaxis_opts=opts.AxisOpts(name="比例/%", is_scale=True),
+            xaxis_opts=opts.AxisOpts(name="年份"),
+            legend_opts=opts.LegendOpts(
+                pos_right=0, pos_bottom="15%", align="right", orient="vertical"
+            )
+        )
+    )
+    for i in bars:
+        bar.add_yaxis(
+            columns[i], yx[i],
+            label_opts=opts.LabelOpts()
+        )
+
+    return (Page(title).add(line,bar) if line and bar else line or bar).render_notebook()
