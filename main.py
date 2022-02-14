@@ -19,7 +19,11 @@ all_plots = []
 
 def show_all(save=True):
     page = Page(Page.SimplePageLayout).add(*all_plots)
-    page.render("dashboard.html") if save else None
+    if save:
+        page.render("dashboard.html")
+        for i, plot in enumerate(all_plots):
+            to_png(plot.render(), i)
+    
     return page.render_notebook()
 
 def get_init_options(height=480):
@@ -367,13 +371,14 @@ def show_order(df, column):
         .set_global_opts(
             title_opts=opts.TitleOpts(title),
             xaxis_opts=opts.AxisOpts(name="选项"),
-            yaxis_opts=opts.AxisOpts(name="数量", is_scale=False)
+            yaxis_opts=opts.AxisOpts(name="数量", is_scale=False),
+            legend_opts=opts.LegendOpts(pos_right=0, orient="vertical", align="right")
         )
     )
     for i in range(1, end + 1):
-        bar.add_yaxis(f"第{i}", [data[j].get(i, 0) for j in x], stack="stack")
+        bar.add_yaxis(f"作为第{i}项", [data[j].get(i, 0) for j in x], stack="stack")
 
-
+    all_plots.append(bar)
     return save_and_show(bar.set_series_opts(label_opts=opts.LabelOpts(position="inside")), f"{title}_序数图")
 
 def riverize(xy, x_names, y_names, title, *axis_args):
@@ -407,7 +412,7 @@ def show_double_bar(df_1, df_2, column, x_axis, names):
         .add_yaxis(names[0], [dict_1[i] for i in x_axis])
         .add_yaxis(names[1], [dict_2[i] for i in x_axis])
         .set_global_opts(
-            title_opts=opts.TitleOpts(title=title),
+            title_opts=opts.TitleOpts(title),
             yaxis_opts=opts.AxisOpts(name="比例/%", is_scale=False),
             xaxis_opts=opts.AxisOpts(name="年份"),
             legend_opts=opts.LegendOpts(
@@ -415,4 +420,24 @@ def show_double_bar(df_1, df_2, column, x_axis, names):
             )
         )
     )
+    all_plots.append(bar)
     return save_and_show(bar, f"{column}_柱状图")
+
+def show_slide_bar(df, column):
+    title = parse_title(column)
+    data = dict(count(df[column]))
+    bar = (
+        Bar(get_init_options())
+        .add_xaxis(list(map(str, range(11))))
+        .add_yaxis("", [data.get(i, 0) for i in range(11)])
+        .set_global_opts(
+            title_opts=opts.TitleOpts(title),
+            xaxis_opts=opts.AxisOpts(name="分数")
+        )
+    )
+    all_plots.append(bar)
+    return save_and_show(bar, f"{title}_直方图")
+
+def get_mean_and_median(n):
+    tmp = table[question(n)]
+    return sum(tmp) / 76, sum(sorted(tmp)[37:39])/2
