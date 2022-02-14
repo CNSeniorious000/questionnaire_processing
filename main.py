@@ -8,10 +8,10 @@ from pyecharts.globals import ThemeType
 
 # global_theme = ThemeType.INFOGRAPHIC
 # global_theme = ThemeType.LIGHT
-global_theme = ThemeType.WONDERLAND
+# global_theme = ThemeType.WONDERLAND
 # global_theme = ThemeType.ESSOS
 # global_theme = ThemeType.WALDEN
-# global_theme = ThemeType.VINTAGE
+global_theme = ThemeType.VINTAGE
 # global_theme = ThemeType.DARK
 # global_theme = ThemeType.PURPLE_PASSION
 
@@ -226,7 +226,7 @@ def parse_column(df:pd.DataFrame, column, multi_choice, separator=' | ', transpo
 
 def parse_title(column:str):
     rindex = len(column)
-    for suffix in '【？':  # tail letters to ignore
+    for suffix in '【？?:：':  # tail letters to ignore
         try:
             rindex = min(rindex, column.rindex(suffix))
         except ValueError:
@@ -234,7 +234,7 @@ def parse_title(column:str):
     try:
         return column[column.index('、')+1:rindex]
     except ValueError:
-        return column.removesuffix('：')
+        return column[:rindex]
 
 def show_simple_pie(column:str, df: pd.DataFrame = table, multi_choice=True, suffix="", show_legend=True):
     title = parse_title(column) + suffix
@@ -328,10 +328,10 @@ def show_opposite(column:str, df: pd.DataFrame = table, suffix=""):
     all_plots.extend(plots := (sun_cloud, raincloud))
     return save_and_show(Page(Page.SimplePageLayout).add(*plots), f"{title}_双云图")
 
-def get_others(column):
+def get_others(column, df=table):
     return [
         j
-        for i in get_data_except_null(column, retain=True)
+        for i in get_data_except_null(column, df, True)
         for j in i.split('┋')
         if '〖' in j and '〗' in j
     ]
@@ -339,8 +339,42 @@ def get_others(column):
 table_sellers = table.loc[(i for i, ans in enumerate(table[question(3)]) if "商贩" in ans)]
 table_non_sellers = table.loc[(i for i, ans in enumerate(table[question(3)]) if "商贩" not in ans)]
 
-def show_order():
-    pass
+def parse_order(raw):
+    arrow = '→'
+    choices = {}
+    for result in raw:
+        for i, choice in enumerate(result.split(arrow)):
+            if choice in choices:
+                this = choices[choice]
+            else:
+                this = choices[choice] = {}
+            try:
+                this[i + 1] += 1
+            except KeyError:
+                this[i + 1] = 1
+    return choices
+
+def show_order(df, column):
+    title = parse_title(column)
+    data = parse_order(df[column])
+    x = list(data)
+    end = max(max(this.keys()) for this in data.values())
+
+    bar = (
+        Bar(get_init_options())
+        .add_xaxis(x)
+        .reversal_axis()
+        .set_global_opts(
+            title_opts=opts.TitleOpts(title),
+            xaxis_opts=opts.AxisOpts(name="选项"),
+            yaxis_opts=opts.AxisOpts(name="数量", is_scale=False)
+        )
+    )
+    for i in range(1, end + 1):
+        bar.add_yaxis(f"第{i}", [data[j].get(i, 0) for j in x], stack="stack")
+
+
+    return save_and_show(bar.set_series_opts(label_opts=opts.LabelOpts(position="inside")), f"{title}_序数图")
 
 def riverize(xy, x_names, y_names, title, *axis_args):
     data = [
@@ -355,31 +389,30 @@ def riverize(xy, x_names, y_names, title, *axis_args):
     all_plots.append(river)
     return save_and_show(river, f"{title}_河流图")
 
-def remove_fill(table:pd.DataFrame, column):
-    table[column] = [
-        i[:i.index('〖')]
-        for i in table[column]
-        if '〖' in i and '〗' in j
+def remove_fill(df:pd.DataFrame, column):
+    removed = []
+    df.loc[:,column] = [
+        removed.append(i[i.index('〖')+1:]) or i[:i.index('〖')] if '〖' in i and '〗' in i else i
+        for i in df[column]
     ]
+    return removed
 
-def show_double_plot():
-    subtitle = separator.join(columns[i] for i in bars)
+def show_double_bar(df_1, df_2, column, x_axis, names):
+    title = parse_title(column)
+    dict_1 = dict(zip(*parse_column(df_1, column, True)))
+    dict_2 = dict(zip(*parse_column(df_2, column, True)))
     bar = (
-        Bar(opts.InitOpts("920px", "480px", theme=global_theme))
-        .add_xaxis("2015 2016 2017 2018 2019".split())
+        Bar(get_init_options())
+        .add_xaxis(x_axis)
+        .add_yaxis(names[0], [dict_1[i] for i in x_axis])
+        .add_yaxis(names[1], [dict_2[i] for i in x_axis])
         .set_global_opts(
-            title_opts=opts.TitleOpts(f"{title}: {subtitle}"),
-            yaxis_opts=opts.AxisOpts(name="比例/%", is_scale=True),
+            title_opts=opts.TitleOpts(title=title),
+            yaxis_opts=opts.AxisOpts(name="比例/%", is_scale=False),
             xaxis_opts=opts.AxisOpts(name="年份"),
             legend_opts=opts.LegendOpts(
                 pos_right=0, pos_bottom="15%", align="right", orient="vertical"
             )
         )
     )
-    for i in bars:
-        bar.add_yaxis(
-            columns[i], yx[i],
-            label_opts=opts.LabelOpts()
-        )
-
-    return (Page(title).add(line,bar) if line and bar else line or bar).render_notebook()
+    return save_and_show(bar, f"{column}_柱状图")
