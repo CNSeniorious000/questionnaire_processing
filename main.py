@@ -6,12 +6,12 @@ from pyecharts.charts import *
 from pyecharts import options as opts
 from pyecharts.globals import ThemeType
 
-# global_theme = ThemeType.INFOGRAPHIC
+global_theme = ThemeType.INFOGRAPHIC
 # global_theme = ThemeType.LIGHT
 # global_theme = ThemeType.WONDERLAND
 # global_theme = ThemeType.ESSOS
 # global_theme = ThemeType.WALDEN
-global_theme = ThemeType.VINTAGE
+# global_theme = ThemeType.VINTAGE
 # global_theme = ThemeType.DARK
 # global_theme = ThemeType.PURPLE_PASSION
 
