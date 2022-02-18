@@ -6,12 +6,12 @@ from pyecharts.charts import *
 from pyecharts import options as opts
 from pyecharts.globals import ThemeType
 
-global_theme = ThemeType.INFOGRAPHIC
+# global_theme = ThemeType.INFOGRAPHIC
 # global_theme = ThemeType.LIGHT
 # global_theme = ThemeType.WONDERLAND
 # global_theme = ThemeType.ESSOS
 # global_theme = ThemeType.WALDEN
-# global_theme = ThemeType.VINTAGE
+global_theme = ThemeType.VINTAGE
 # global_theme = ThemeType.DARK
 # global_theme = ThemeType.PURPLE_PASSION
 
@@ -26,12 +26,13 @@ def show_all(save=True):
     
     return page.render_notebook()
 
-def get_init_options(height=360):
+def get_init_options(height=480):
     return opts.InitOpts(
         theme=global_theme,
         animation_opts=opts.AnimationOpts(bool(delay)),
-        width="840px",
-        height=f"{height}px"
+        width="920px",
+        height=f"{height}px",
+        bg_color="transparent"
     )
 
 table, index, items = read_excel(1)
