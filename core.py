@@ -48,13 +48,9 @@ def to_png(html, name, ratio=3, delay=0, driver=Driver.Edge, remove=False):
 delay = 1
 
 def save_and_show(plot, name, ratio=2, delay=delay, driver=Driver.Edge, remove=True, concurrent="thread"):
-    args = (plot.render(f"{name}.html"), name, ratio, delay, driver, remove)
-    match concurrent:
-        case "loky": get_reusable_executor(max_workers=16, reuse=True).submit(to_png, *args)
-        case "thread": threading.Thread(target=to_png, args=args).start()
-        case False: to_png(*args)
+    # args = (plot.render(f"{name}.html"), name, ratio, delay, driver, remove)
+    # match concurrent:
+    #     case "loky": get_reusable_executor(max_workers=16, reuse=True).submit(to_png, *args)
+    #     case "thread": threading.Thread(target=to_png, args=args).start()
+    #     case False: to_png(*args)
     return plot.render_notebook()
-
-
-def fill_null():
-    pass

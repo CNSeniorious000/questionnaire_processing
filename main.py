@@ -26,11 +26,11 @@ def show_all(save=True):
     
     return page.render_notebook()
 
-def get_init_options(height=480):
+def get_init_options(height=360):
     return opts.InitOpts(
         theme=global_theme,
         animation_opts=opts.AnimationOpts(bool(delay)),
-        width="920px",
+        width="840px",
         height=f"{height}px"
     )
 
