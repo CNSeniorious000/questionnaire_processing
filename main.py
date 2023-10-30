@@ -124,7 +124,7 @@ def show_time_compare():
 
     all_plots.append(scatter)
 
-    return save_and_show(scatter, f"用时分布与提交时间的关系_散点图")
+    return save_and_show(scatter, "用时分布与提交时间的关系_散点图")
 
 def count(sequence):
     return sorted(Counter(sequence).items(), key=lambda i:i[1])
@@ -285,19 +285,15 @@ def cut_jieba(text):
     return words
 
 def cut(text, backend="jieba"):
-    if backend == "jieba":
-        return cut_jieba(text)
-    else:
-        return cut_SnowNLP(text)
+    return cut_jieba(text) if backend == "jieba" else cut_SnowNLP(text)
 
 def classify(text):
     if isinstance(text, str):
         return classify(get_data_except_null(text))
-    else:
-        positive, negative = [], []
-        for i in sorted_by_sentiments(text):
-            (positive if SnowNLP(i).sentiments > 0.5 else negative).append(i)
-        return positive, negative
+    positive, negative = [], []
+    for i in sorted_by_sentiments(text):
+        (positive if SnowNLP(i).sentiments > 0.5 else negative).append(i)
+    return positive, negative
 
 def sorted_by_sentiments(text):
     return sorted(text, key=lambda s:SnowNLP(s).sentiments)
